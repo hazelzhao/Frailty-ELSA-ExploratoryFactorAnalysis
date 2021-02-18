@@ -1,0 +1,142 @@
+---
+title: "FA08/07"
+author: "Hazel Zhao"
+date: "30/10/2020"
+output: html_document
+---
+
+```{r include = TRUE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+```{r}
+library("dplyr")
+library("tidyverse")
+library(haven)
+library(dineq)
+library(haven)
+library("corrplot")
+library(openxlsx)
+library(psych)
+library(polycor)
+```
+
+
+7. Cognitive function
+
+Cognitive loss is a major issue for older people, having huge impact on their daily life.
+
+
+
+```{r}
+var_list=c(unlist(classified_list[10]))
+temp=data.frame(mydata[,var_list])
+time_pro=matrix(nrow=5,ncol=6,dimnames = list(var_list[1:5],c("Mean","SD","Min","Max","percent of'0'","percent of'1'")))
+ for (i in 1: 5){
+    tab=table(temp[,i])
+   time_pro[i,5]=tab[[1]]/sum(tab)
+   time_pro[i,6]=1-time_pro[i,5]
+   time_pro[i,1]=mean(temp[,i])
+   time_pro[i,2]=sd(temp[,i])
+   time_pro[i,3]=min(temp[,i])
+   time_pro[i,4]=max(temp[,i])
+  }
+
+time_pro=data.frame(time_pro)
+time_pro
+for (i in 1:ncol(temp)){
+  print(attr(temp[,i],"label"))
+}
+```
+```{r}
+temp=mydata[,var_list[6]]
+attr(mydata[,var_list[6]],"label")
+table(temp)/5521
+ggplot(NULL,aes(x=as.factor(temp)))+ 
+  geom_bar(aes(y=(..count..)/sum(..count..)))+
+  labs(x="rank",y="percentage of participants",title = "Number of words recalled immediately")+
+  theme(plot.title = element_text(hjust = 0.5),panel.grid =element_blank()) 
+
+```
+```{r}
+temp=mydata[,var_list[8]]
+attr(mydata[,var_list[8]],"label")
+table(temp)/5521
+ggplot(NULL,aes(x=as.factor(temp)))+ 
+  geom_bar(aes(y=(..count..)/sum(..count..)))+
+  labs(x="rank",y="percentage of participants",title = "Number of words recalled after delay")+
+  theme(plot.title = element_text(hjust = 0.5),panel.grid =element_blank()) 
+```
+
+```{r}
+temp=mydata[,var_list[7]]
+attr(mydata[,var_list[7]],"label")
+table(temp)/5521
+ggplot(NULL,aes(x=as.factor(temp)))+ 
+  geom_bar(aes(y=(..count..)/sum(..count..)))+
+  labs(x="rank",y="percentage of participants",title = "Number of animals mentioned (fluency)")+
+  theme(plot.title = element_text(hjust = 0.5),panel.grid =element_blank()) 
+
+```
+```{r}
+name_cognitive=unlist(classified_list[10])
+con=mydata[,name_cognitive]
+con$cfdatd4[1]=1  #small trick because this column only has "0"
+con=con[,1:4]
+#drop=c("cfdatd4")
+#drop=c("cfdatd4","cfmem4")
+#con=con[,!(names(con) %in% drop)]
+#corre_cognitive=cor(con,method = "pearson")
+#con=sapply(con,as.factor)
+#corre_cognitive=polychoric(con)
+corre_cognitive=tetrachoric(con)
+#corre_cognitive=corre_cognitive$correlations
+corre_cognitive=pmax(corre_cognitive$rho,t(corre_cognitive$rho))
+KMO(corre_cognitive)
+bart_spher(corre_cognitive)
+#cor.plot(corre_cognitive,main = "Corrlation of cognitive function items",labels = #c("Day of month","Month","Year","Day","Prospective memory test","Words recalled #immediately","Words recalled after delay","Animals mentioned"),cex.axis=0.8)
+```
+```{r}
+corrplot(corre_cognitive, is.corr = TRUE, number.cex = .5, tl.col = 'black',order = 'hclust', addrect = 2, tl.cex = 0.7)
+corrplot.mixed(corre_cognitive, is.corr = TRUE, number.cex = .5, tl.col = 'black',tl.cex = 0.4)
+```
+```{r}
+eigen.corre <- eigen(corre_cognitive)
+eigen.corre$values
+```
+```{r}
+scree(corre_cognitive)
+```
+```{r}
+fa.parallel(corre_cognitive, fa="pc",n.obs= nrow(mydata),n.iter = 1000)
+```
+```{r}
+cognitive.fa1<- fa(corre_cognitive, nfactors = 1, rotate = 'none',n.obs=4800,scores = 'regression', fm = 'pa')
+print(cognitive.fa1,sort = T)
+fa.diagram(cognitive.fa1, cut=0.299,labels=names(cognitive.fa1),digits=2,e.size=0.05,rsize=0.1,cex=1.2,adj=1,marg=c(1,1,1.5,1))
+score6=factor.scores(con,cognitive.fa1)
+cognitive_factor=score6$scores
+
+Orientation_time=as.matrix(con)%*%cognitive.fa1$loadings[1:4,1]
+
+```
+1 factor is extracted for date naming items and named as orientation in time.
+
+
+
+8. Correlation between factors 
+```{r}
+
+# factor_matrix=data.frame(Upper_limb,Lower_limb,Other,ADLs_disability,IADLs_disability,Heart_diseases, Other_CVD, Movement, Absence_positive_anhodonia,Somatic_activity,Orientation_time)
+# 
+# cor.plot(cor(factor_matrix), main= "Correlation between all factors")
+
+factor_name=c( "Upper_limb","Lower_limb", "Other","ADLs_disability","IADLs_disability","Heart_diseases","Other_CVD","Movement","Positive_anhodonia","Somatic_activity","Orientation_time"  )
+factor_score=data.frame(mobility_factor,disability_factor,cvd_factor,Movement_factor,mental_factor,cognitive_factor)
+names(factor_score)=factor_name
+cor.plot(cor(factor_score), main= "Correlation between all factors",show.legend = F, cex.axis=0.7,xlas = 2)
+```
+
+11 factors are identified under domains of the FI. Correlation of factors across domains are assessed. 3 factors of mobility: upper limb difficulty, lower limb difficulty and other difficulty, ADLs and IADLs in disability and somatic activity or inactivity are related. First, 3 factors of mobility and the 2 factors of disability are both symptoms or the result of conditions or diseases of physical health. In fact, it is common to assess disability with mobility items along with ADLs and IADLs, though for the case of ELSA, they are considered separately. Mobility and disability may be a result of common health conditions or diseases, such as the loss of muscle mass, quality, strength, Osteoporosis, neural weakness etc. Consequently, in this study, domain mobility and domain disability are correlated. 
+
+The third domain involving correlation is CES-D measured mental health, specifically, somatic activity or inactivity. There is evidence showing depression is associated with disability in elderly people, meanwhile the association between somatic symptom has also been identified. It therefore makes sense that somatic activity or inactivity are correlated with disability and mobility.
