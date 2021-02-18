@@ -25,8 +25,15 @@ type of deficits needs to be distinguished with the disease such that the measur
 ### Frailty Index  
 
 ### EFA within each subset of variables
+    
+    1. correlation of items witnin subset
+    2. number of factors
+    3. estimate factor loading
+    4. model fitting and factor structure
+    5. correlation of all factors
 
 
+    
 
 
 
