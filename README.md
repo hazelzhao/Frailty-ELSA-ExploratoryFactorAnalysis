@@ -1,6 +1,14 @@
 # Frailty-ELSA-ExploratoryFactorAnalysis
 
-## Intro
+Files:
+
+Frailty-EFA-Report.html shows the entire result. Need to download to read. 
+Frailty-EFA-Report-PDF version is smaller, which can be viewed in github.
+
+deficits ano.xlsx is annotation of variables in the cleaned data.
+mydata.Rda is the cleaned data. The raw data is 100MB, including over 11,000 records and over 3,000 variables.
+
+## Intro and summary of the model
 
 The aim of this study is to discover the internal structure of the resulting frailty index of participants in the English Longitudinal Study of Ageing (ELSA), to identify factors contained in the cumulative deficits model. 
 
